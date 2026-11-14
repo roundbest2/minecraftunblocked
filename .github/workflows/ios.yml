@@ -1,0 +1,52 @@
+name: Compile Flux for iPhone
+on:
+  push:
+    paths:
+      - 'Flux/**'
+      - 'FluxTests/**'
+      - 'Flux.xcodeproj/**'
+      - 'scripts/**'
+      - '.github/workflows/ios.yml'
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: flux-ios-build
+  cancel-in-progress: true
+jobs:
+  compile-and-test:
+    runs-on: macos-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile unsigned iPhone app and package IPA
+        run: bash scripts/build-unsigned.sh
+      - name: Keep compiled iPhone app
+        uses: actions/upload-artifact@v4
+        with:
+          name: Flux-unsigned-iPhone
+          path: dist/
+          if-no-files-found: error
+      - name: Build and test on an available iPhone simulator
+        run: bash scripts/check-mac.sh
+      - name: Package simulator app
+        run: |
+          ditto -c -k --sequesterRsrc --keepParent \
+            build/DerivedData/Build/Products/Debug-iphonesimulator/Flux.app \
+            build/Flux-simulator.zip
+      - name: Keep simulator app
+        uses: actions/upload-artifact@v4
+        with:
+          name: Flux-simulator
+          path: build/Flux-simulator.zip
+          if-no-files-found: error
+      - name: Keep test result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Flux-test-results
+          path: |
+            build/*.xcresult
+            build/*.log
+          if-no-files-found: ignore
