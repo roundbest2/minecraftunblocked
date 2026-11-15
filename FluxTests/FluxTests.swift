@@ -37,6 +37,9 @@ final class FluxTests: XCTestCase {
             let end = try XCTUnwrap(WallpaperRenderer.image(size: CGSize(width: 120, height: 260), time: 6, settings: settings))
             let startData = try XCTUnwrap(first.dataProvider?.data) as Data
             let endData = try XCTUnwrap(end.dataProvider?.data) as Data
+            let middle = try XCTUnwrap(WallpaperRenderer.image(size: CGSize(width: 120, height: 260), time: 1.5, settings: settings))
+            let middleData = try XCTUnwrap(middle.dataProvider?.data) as Data
+            XCTAssertNotEqual(startData, middleData, style.title + " must visibly animate")
             XCTAssertEqual(startData, endData, style.title + " must loop")
             XCTAssertGreaterThan(Set(startData).count, 40, style.title + " must contain visible color")
         }

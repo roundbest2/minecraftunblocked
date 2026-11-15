@@ -3,6 +3,7 @@ import SwiftUI
 struct WallpaperEditor: View {
     @EnvironmentObject private var store: StudioStore
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
     @StateObject private var export = ExportController()
     @State private var homePreview = false
     @State private var showGuide = false
@@ -37,11 +38,13 @@ struct WallpaperEditor: View {
                                 Text(export.status).font(.caption).foregroundStyle(FluxPalette.muted)
                                 Button("Cancel export", role: .cancel) { export.cancel() }
                                     .font(.subheadline)
+                                    .disabled(!export.canCancel)
                             }.fluxPanel()
                         } else {
                             PrimaryButton(title: "Save Live Photo", symbol: "livephoto") {
                                 export.start(.livePhoto, settings: store.settings)
                             }
+                            .accessibilityIdentifier("wallpaper.saveLivePhoto")
                             HStack(spacing: 12) {
                                 exportButton("Share still", icon: "photo", kind: .still)
                                 exportButton("Share loop", icon: "play.rectangle", kind: .movie)
@@ -76,6 +79,12 @@ struct WallpaperEditor: View {
                 get: { export.message != nil },
                 set: { if !$0 { export.message = nil } }
             )) {
+                if export.needsPhotoSettings {
+                    Button("Open Settings") {
+                        if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
+                        export.message = nil
+                    }
+                }
                 Button("OK", role: .cancel) { export.message = nil }
             } message: { Text(export.message ?? "") }
         }

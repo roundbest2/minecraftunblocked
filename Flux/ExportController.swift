@@ -7,6 +7,8 @@ final class ExportController: ObservableObject {
     @Published private(set) var isBusy = false
     @Published private(set) var progress = 0.0
     @Published private(set) var status = ""
+    @Published private(set) var canCancel = true
+    @Published private(set) var needsPhotoSettings = false
     @Published var message: String?
     @Published var shareItem: ExportFiles?
     private var shareFiles: ExportFiles?
@@ -17,6 +19,8 @@ final class ExportController: ObservableObject {
         cleanSharedFiles()
         isBusy = true
         progress = 0
+        canCancel = true
+        needsPhotoSettings = false
         status = "Creating your wallpaper…"
         message = nil
         task = Task {
@@ -34,6 +38,7 @@ final class ExportController: ObservableObject {
                 output = result
                 try Task.checkCancellation()
                 if case .livePhoto = kind {
+                    canCancel = false
                     status = "Saving to Photos…"
                     try await PhotoSaver.save(result)
                     result.cleanUp()
@@ -46,12 +51,16 @@ final class ExportController: ObservableObject {
                 output?.cleanUp()
             } catch {
                 output?.cleanUp()
+                if let exportError = error as? ExportError, case .permission = exportError {
+                    needsPhotoSettings = true
+                }
                 message = error.localizedDescription
             }
         }
     }
 
     func cancel() {
+        guard canCancel else { return }
         status = "Cancelling…"
         task?.cancel()
     }

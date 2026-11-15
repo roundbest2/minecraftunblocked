@@ -4,6 +4,7 @@ on:
     paths:
       - 'Flux/**'
       - 'FluxTests/**'
+      - 'FluxUITests/**'
       - 'Flux.xcodeproj/**'
       - 'scripts/**'
       - '.github/workflows/ios.yml'
@@ -49,4 +50,12 @@ jobs:
           path: |
             build/*.xcresult
             build/*.log
+            build/test-summary.json
+          if-no-files-found: ignore
+      - name: Keep native app screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Flux-screenshots
+          path: build/screenshots/
           if-no-files-found: ignore
